@@ -17,8 +17,9 @@ class PlayBall {
 }
 
 class Brick {
+  String name;
   Rect rect;
   Jardinain? jardinain;
 
-  Brick({this.rect = Rect.zero,this.jardinain});
+  Brick({this.rect = Rect.zero, this.jardinain, required this.name});
 }

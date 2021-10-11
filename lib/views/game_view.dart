@@ -9,9 +9,7 @@ import 'package:jardinains/elements/jardinain.dart';
 import 'package:jardinains/elements/obstacle.dart';
 
 const _MODES = [
-  [5, "Easy"],
-  [7, "Medium"],
-  [8, "Hard"]
+  [5, "Easy"]
 ];
 
 class GameView extends StatefulWidget {
@@ -38,11 +36,12 @@ class _GameViewState extends State<GameView> {
   bool isMobile = false;
   List<Jardinain> fallingJardinains = [];
   List<Obstacle> obstacles = [];
+  Timer? _timer;
 
   @override
   void dispose() {
     super.dispose();
-
+    _timer!.cancel();
     if (timer != null) {
       timer!.cancel();
     }
@@ -58,6 +57,25 @@ class _GameViewState extends State<GameView> {
     WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
       setupGame();
     });
+  }
+
+  int _counter = 0;
+
+  void _getTime() {
+    //นาฬิกานับถอยหลัง
+    _timer = new Timer.periodic(
+      const Duration(seconds: 1),
+      (Timer timer) => setState(
+        () {
+          _counter = _counter + 1;
+          // if (_counter >=0) {
+          //   timer.cancel();
+          // } else {
+
+          // }
+        },
+      ),
+    );
   }
 
   setupGame() {
@@ -85,6 +103,7 @@ class _GameViewState extends State<GameView> {
       reviving = false;
       health = 3;
       score = 0;
+
       singleShotKills = 0;
     });
     setupGame();
@@ -112,7 +131,7 @@ class _GameViewState extends State<GameView> {
       launched = false;
       finishing = true;
       prevScore = score;
-      Future.delayed(Duration(milliseconds: 4000), () {
+      Future.delayed(Duration(milliseconds: 1000), () {
         reset();
       });
     }
@@ -180,7 +199,13 @@ class _GameViewState extends State<GameView> {
           fallingJardinains.add(brick.jardinain!);
         }
         bricks.removeAt(x);
-        score += 50;
+        if (brick.name == "a1") {
+          score += 25;
+          print('Brick 1 : 25');
+        } else {
+          score += 50;
+          print('Brick 2 : 50');
+        }
         if (singleShotKills > 0) {
           score += 10;
         }
@@ -225,6 +250,7 @@ class _GameViewState extends State<GameView> {
       if (health > 0) {
         grantLife();
       } else {
+        _timer!.cancel();
         endGame();
       }
     }
@@ -271,7 +297,7 @@ class _GameViewState extends State<GameView> {
                           left: 0,
                           child: Center(
                               child: Image.asset(
-                            "assets/images/jardinain.png",
+                            " ",
                             height: jardianSize,
                           ))),
                       Container(
@@ -283,9 +309,16 @@ class _GameViewState extends State<GameView> {
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               Text(
-                                "Jardinains!",
+                                "Score !",
                                 style: TextStyle(
-                                    fontSize: isMobile ? 45 : 74, fontWeight: FontWeight.bold, color: Colors.green, shadows: [BoxShadow(color: Colors.black, blurRadius: 1, spreadRadius: 5)]),
+                                    fontSize: isMobile ? 45 : 74,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.green,
+                                    shadows: [BoxShadow(color: Colors.black, blurRadius: 1, spreadRadius: 5)]),
+                              ),
+                              Text(
+                                "Time : $_counter",
+                                style: TextStyle(fontSize: 20, color: Colors.black),
                               ),
                               SizedBox(
                                 height: 10,
@@ -305,7 +338,9 @@ class _GameViewState extends State<GameView> {
                                             child: Container(
                                               margin: const EdgeInsets.all(5),
                                               width: 100,
-                                              decoration: BoxDecoration(color: e[0] == mode ? Colors.green : Colors.grey, borderRadius: borderRadius),
+                                              decoration: BoxDecoration(
+                                                  color: e[0] == mode ? Colors.green : Colors.grey,
+                                                  borderRadius: borderRadius),
                                               child: Padding(
                                                 padding: const EdgeInsets.all(10),
                                                 child: Center(
@@ -335,11 +370,17 @@ class _GameViewState extends State<GameView> {
                                       children: [
                                         Text(
                                           "Previous Score",
-                                          style: TextStyle(fontSize: isMobile ? 20 : 40, fontWeight: FontWeight.bold, color: Colors.black),
+                                          style: TextStyle(
+                                              fontSize: isMobile ? 20 : 40,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.black),
                                         ),
                                         Text(
                                           "$prevScore",
-                                          style: TextStyle(fontSize: isMobile ? 20 : 40, fontWeight: FontWeight.bold, color: Colors.green),
+                                          style: TextStyle(
+                                              fontSize: isMobile ? 20 : 40,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.green),
                                         ),
                                       ],
                                     ),
@@ -351,13 +392,18 @@ class _GameViewState extends State<GameView> {
                                     shape: RoundedRectangleBorder(borderRadius: borderRadius),
                                     color: Colors.orange,
                                     onPressed: () {
+                                      _counter = 0;
+                                      _getTime();
                                       Navigator.of(context).pop();
                                     },
                                     child: Padding(
                                       padding: const EdgeInsets.all(10),
                                       child: Text(
                                         firstGame ? "Start Game" : "Restart",
-                                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: isMobile ? 20 : 25),
+                                        style: TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: isMobile ? 20 : 25),
                                       ),
                                     ),
                                   ),
@@ -374,6 +420,7 @@ class _GameViewState extends State<GameView> {
         });
   }
 
+  List<String> brick_name = ['a1', 'a2'];
   // Creates a random brick wall based on the size of window at that moment
   createBrickWall() {
     bricks = [];
@@ -392,10 +439,13 @@ class _GameViewState extends State<GameView> {
       double previousLocation = 0;
       List<Jardinain> jardinains = [];
       for (int y = 0; y < currentColumnCount; y++) {
-        Rect rect = Rect.fromLTWH(leftOffset + (y.toDouble() * brickSize.width), _jardinainController.jardinainHeight + x * brickSize.height, brickSize.width, brickSize.height);
-        Brick brick = Brick(rect: rect);
+        Rect rect = Rect.fromLTWH(leftOffset + (y.toDouble() * brickSize.width),
+            _jardinainController.jardinainHeight + x * brickSize.height, brickSize.width, brickSize.height);
+        Brick brick = Brick(rect: rect, name: brick_name[Random().nextInt(2)]);
         if (x == 0) {
-          if (random.nextInt(100).isEven && rect.left > (previousLocation + _jardinainController.jardinainHeight) && jardinains.length <= 4) {
+          if (random.nextInt(100).isEven &&
+              rect.left > (previousLocation + _jardinainController.jardinainHeight) &&
+              jardinains.length <= 4) {
             previousLocation = rect.left;
             final Jardinain jardinain = Jardinain(
                 id: jardinains.length,
@@ -403,7 +453,8 @@ class _GameViewState extends State<GameView> {
                 yPosition: 2,
                 launchObstacle: (obsPosition) {
                   if (obstacles.length < 1) {
-                    obstacles.add(Obstacle(id: obstacles.length, xPosition: obsPosition, yPosition: _jardinainController.jardinainHeight));
+                    obstacles.add(Obstacle(
+                        id: obstacles.length, xPosition: obsPosition, yPosition: _jardinainController.jardinainHeight));
                   }
                 });
             jardinains.add(jardinain);
@@ -419,6 +470,7 @@ class _GameViewState extends State<GameView> {
     setState(() {});
   }
 
+  List<String> url = ['assets/images/brick.png', 'assets/images/brick2.png'];
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (context, constraints) {
@@ -463,7 +515,7 @@ class _GameViewState extends State<GameView> {
                               width: brickSize.width,
                               height: brickSize.height,
                               child: Image.asset(
-                                "assets/images/brick.png",
+                                url[Random().nextInt(2)],
                                 fit: BoxFit.cover,
                               ),
                             ),
@@ -475,7 +527,7 @@ class _GameViewState extends State<GameView> {
                             left: e.xPosition,
                             width: _jardinainController.jardinainHeight,
                             height: _jardinainController.jardinainHeight,
-                            child: Image.asset("assets/images/jard_static.png"),
+                            child: Image.asset("assets/images/Klee.png"),
                           ))
                       .toList(),
                   ...obstacles
@@ -493,23 +545,24 @@ class _GameViewState extends State<GameView> {
                             top: playBall.position.y,
                             left: playBall.position.x,
                             child: Image.asset(
-                              "assets/images/cannon_ball.png",
-                              width: playBall.radius * 2,
-                              height: playBall.radius * 2,
+                              "assets/images/burapha_ball.png",
+                              width: playBall.radius * 10,
+                              height: playBall.radius * 10,
                             ))
                         : Positioned(
                             bottom: platformSize.height,
                             left: pointer.dx,
                             child: Image.asset(
-                              "assets/images/cannon_ball.png",
-                              width: playBall.radius * 2,
-                              height: playBall.radius * 2,
+                              "assets/images/burapha_ball.png",
+                              width: playBall.radius * 10,
+                              height: playBall.radius * 10,
                             )),
                   ],
                   Positioned(
                     left: pointer.dx - (platformSize.width / 2),
                     bottom: 0,
-                    child: Image.asset("assets/images/grass_platform.png", width: platformSize.width, height: platformSize.height, fit: BoxFit.fill),
+                    child: Image.asset("assets/images/grass_platform.png",
+                        width: platformSize.width, height: platformSize.height, fit: BoxFit.fill),
                   ),
                   if (blast) ...[
                     Positioned(
@@ -523,7 +576,8 @@ class _GameViewState extends State<GameView> {
                       top: 10,
                       right: 10,
                       child: Container(
-                        decoration: BoxDecoration(color: Colors.white.withOpacity(0.7), borderRadius: BorderRadius.circular(10.0)),
+                        decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.7), borderRadius: BorderRadius.circular(10.0)),
                         child: Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: Column(
@@ -534,6 +588,10 @@ class _GameViewState extends State<GameView> {
                               ),
                               Text(
                                 "$score",
+                                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                              ),
+                              Text(
+                                "$_counter",
                                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                               ),
                               Row(
@@ -552,7 +610,9 @@ class _GameViewState extends State<GameView> {
                       )),
                   if (finishing) ...[
                     Center(
-                      child: bricks.isEmpty ? Image.asset("assets/images/up_high.gif") : Image.asset("assets/images/laughing.gif"),
+                      child: bricks.isEmpty
+                          ? Image.asset("assets/images/winner.gif")
+                          : Image.asset("assets/images/gameover.gif"),
                     )
                   ],
                   if (reviving) ...[

@@ -15,7 +15,7 @@ class _ObstacleWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       child: Image.asset(
-        "assets/images/flower_pot.png",
+        "assets/images/klee_pot.png",
       ),
     );
   }
